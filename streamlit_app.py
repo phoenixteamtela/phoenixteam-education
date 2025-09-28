@@ -165,7 +165,7 @@ def main():
         # Show loading indicator
         with st.spinner("Starting application..."):
             time.sleep(5)
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
