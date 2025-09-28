@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PhoenixTeam Education</title>
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/dashboard.css">
+    <link rel="stylesheet" href="../styles/modal.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="breadcrumb-nav">
+                    <img src="../assets/PhoenixTeam Horizontal_Gradient.png" alt="PhoenixTeam" class="logo">
+                    <span class="breadcrumb-separator">›</span>
+                    <span class="breadcrumb-item">Education Center</span>
+                    <span class="breadcrumb-separator">›</span>
+                    <span class="breadcrumb-item current">Admin Dashboard</span>
+                </div>
+                <div class="header-right">
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="welcome-message">
+                <h4>Welcome back!</h4>
+                <p id="userInfo">Loading...</p>
+            </div>
+
+            <div class="sidebar-menu">
+                <button class="btn btn-primary sidebar-btn" id="createClassBtn">
+                    Create New Class
+                </button>
+                <button class="btn btn-secondary sidebar-btn" id="uploadResourceBtn">
+                    Upload Resource
+                </button>
+                <button class="btn btn-secondary sidebar-btn" id="manageUsersBtn">
+                    Manage Users
+                </button>
+                <button class="btn btn-secondary sidebar-btn" id="manageFlashcardsBtn">
+                    Manage Flashcards
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="grid grid-3">
+                <div class="card stat-card">
+                    <h3>Classes</h3>
+                    <div class="stat-number" id="classCount">-</div>
+                    <p>Total active classes</p>
+                </div>
+
+                <div class="card stat-card">
+                    <h3>Students</h3>
+                    <div class="stat-number" id="studentCount">-</div>
+                    <p>Enrolled students</p>
+                </div>
+
+                <div class="card stat-card">
+                    <h3>Resources</h3>
+                    <div class="stat-number" id="resourceCount">-</div>
+                    <p>Uploaded resources</p>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Manage Classes</h3>
+                    <div id="recentClasses">
+                        <p>Loading classes...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Quick Chat</h3>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Ask the AI assistant..." class="form-input">
+                            <button id="sendChatBtn" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Class Modal -->
+    <div class="modal-overlay" id="createClassModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create New Class</h3>
+                <button class="modal-close" id="closeCreateClassModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="createClassSuccess">
+                    Class created successfully!
+                </div>
+
+                <form id="createClassForm">
+                    <div class="form-group">
+                        <label for="className" class="form-label">Class Name *</label>
+                        <input type="text" id="className" name="className" class="form-input" required placeholder="Enter class name">
+                        <div class="form-error" id="classNameError">Please enter a class name</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="classDescription" class="form-label">Description</label>
+                        <textarea id="classDescription" name="classDescription" class="form-textarea" placeholder="Enter class description (optional)"></textarea>
+                        <div class="form-error" id="classDescriptionError"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelCreateClass">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitCreateClass" form="createClassForm">
+                    Create Class
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Content Modal -->
+    <div class="modal-overlay" id="manageSlidesModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="manageSlidesTitle">Manage Content</h3>
+                <button class="modal-close" id="closeSlidesModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="slidesSuccess"></div>
+
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <h4>Upload PDF Documents</h4>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="upload-icon">📄</div>
+                        <p>Select PDF files to upload:</p>
+                        <div class="custom-file-input-wrapper">
+                            <input type="file" id="slideFileInput" class="custom-file-input" multiple accept=".pdf" onchange="handleFileSelection(event)">
+                            <button type="button" class="custom-file-button">
+                                <span class="file-icon">📁</span>
+                                <span>Choose Files</span>
+                            </button>
+                        </div>
+                        <div class="file-status" id="fileStatus">No files selected</div>
+                        <p class="upload-hint">PDF documents only (Max 10MB each)</p>
+                    </div>
+
+                    <div id="filePreview" class="file-preview" style="display: block;">
+                        <div class="file-preview-header">
+                            <h5>Selected Files:</h5>
+                            <div class="upload-actions">
+                                <button type="button" class="btn btn-outline" id="clearFiles">Clear All</button>
+                                <button type="button" class="btn btn-primary" id="uploadFiles">Upload Content</button>
+                            </div>
+                        </div>
+                        <div id="fileList">No files selected yet</div>
+                    </div>
+                </div>
+
+                <!-- Existing Content Section -->
+                <div class="slides-section">
+                    <div class="slides-header">
+                        <h4>Current Content</h4>
+                    </div>
+                    <div id="slidesList" class="slides-grid">
+                        <p class="no-slides">No content uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelSlides">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Viewer Modal -->
+    <div class="modal-overlay" id="slideViewerModal">
+        <div class="modal modal-fullscreen">
+            <div class="viewer-header">
+                <h3 id="viewerTitle">Content Viewer</h3>
+                <div class="viewer-controls">
+                    <span id="slideCounter">1 / 1</span>
+                    <button class="btn btn-outline" id="closeViewer">Close</button>
+                </div>
+            </div>
+            <div class="viewer-body">
+                <button class="nav-btn nav-prev" id="prevSlide">&lt;</button>
+                <div class="slide-container">
+                    <div id="currentSlide" class="slide-content">
+                        <p>Loading content...</p>
+                    </div>
+                </div>
+                <button class="nav-btn nav-next" id="nextSlide">&gt;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Users Modal -->
+    <div class="modal-overlay" id="manageUsersModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>Manage Users</h3>
+                <button class="modal-close" id="closeUsersModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="usersSuccess"></div>
+
+                <!-- Create User Section -->
+                <div class="create-user-section">
+                    <h4>Create New Student</h4>
+                    <form id="createUserForm" class="user-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newUsername" class="form-label">Username *</label>
+                                <input type="text" id="newUsername" name="username" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newEmail" class="form-label">Email *</label>
+                                <input type="email" id="newEmail" name="email" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newPassword" class="form-label">Password *</label>
+                                <input type="password" id="newPassword" name="password" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignClass" class="form-label">Assign to Class</label>
+                                <div class="custom-dropdown" id="assignClassDropdown">
+                                    <div class="dropdown-trigger" id="assignClassTrigger">
+                                        <span class="dropdown-text">Select a class (optional)</span>
+                                        <span class="dropdown-arrow">▼</span>
+                                    </div>
+                                    <div class="dropdown-menu" id="assignClassMenu">
+                                        <div class="dropdown-item" data-value="">Select a class (optional)</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="assignClass" name="class_id" value="">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Student</button>
+                    </form>
+                </div>
+
+                <!-- Existing Users Section -->
+                <div class="users-section">
+                    <h4>Existing Students</h4>
+                    <div id="usersList" class="users-list">
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelUsers">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Class Modal -->
+    <div class="modal-overlay" id="assignClassModal">
+        <div class="modal modal-medium">
+            <div class="modal-header">
+                <h3 id="assignModalTitle">Assign Student to Class</h3>
+                <button class="modal-close" id="closeAssignModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="assign-info">
+                    <p>Select a class to assign <strong id="assignStudentName">Student</strong> to:</p>
+                </div>
+
+                <div id="assignClassGrid" class="assign-class-grid">
+                    <p>Loading classes...</p>
+                </div>
+
+                <div class="assign-message" id="assignMessage" style="display: none;"></div>
+            </div>
+            <div class="modal-footer" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Flashcards Modal -->
+    <div class="modal-overlay" id="manageFlashcardsModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>Manage Flashcards</h3>
+                <button class="modal-close" id="closeFlashcardsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="flashcardsSuccess"></div>
+
+                <!-- Action Buttons -->
+                <div class="flashcard-actions">
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-primary" id="createFlashcardBtn">
+                            Create Flashcard
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="bulkUploadBtn">
+                            Bulk Upload
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="downloadFlashcardsBtn">
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="filter-section">
+                        <div class="custom-dropdown" id="categoryFilterDropdown">
+                            <div class="dropdown-trigger" id="categoryFilterTrigger">
+                                <span class="dropdown-text">All Categories</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-menu" id="categoryFilterMenu">
+                                <div class="dropdown-item" data-value="">All Categories</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flashcards Count -->
+                <div class="flashcards-count">
+                    <span id="flashcardsCount">0 flashcards</span>
+                </div>
+
+                <!-- Flashcards List -->
+                <div class="flashcards-section">
+                    <h4>Flashcards</h4>
+                    <div id="flashcardsList" class="flashcards-grid">
+                        <p>Loading flashcards...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelFlashcards">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Flashcard Modal -->
+    <div class="modal-overlay" id="flashcardFormModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="flashcardFormTitle">Create Flashcard</h3>
+                <button class="modal-close" id="closeFlashcardFormModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="flashcardFormSuccess"></div>
+
+                <form id="flashcardForm">
+                    <div class="form-group">
+                        <label for="flashcardTerm" class="form-label">Term *</label>
+                        <input type="text" id="flashcardTerm" name="term" class="form-input" required placeholder="Enter term">
+                        <div class="form-error" id="flashcardTermError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flashcardDefinition" class="form-label">Definition *</label>
+                        <textarea id="flashcardDefinition" name="definition" class="form-textarea" required placeholder="Enter definition"></textarea>
+                        <div class="form-error" id="flashcardDefinitionError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flashcardCategory" class="form-label">Category</label>
+                        <input type="text" id="flashcardCategory" name="category" class="form-input" placeholder="Enter category (optional)">
+                        <div class="form-error" id="flashcardCategoryError"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelFlashcardForm">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitFlashcardForm" form="flashcardForm">
+                    Create Flashcard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Flashcards Modal -->
+    <div class="modal-overlay" id="bulkUploadModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Bulk Upload Flashcards</h3>
+                <button class="modal-close" id="closeBulkUploadModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="bulkUploadSuccess"></div>
+
+                <div class="bulk-upload-info">
+                    <p><strong>Excel File Format:</strong></p>
+                    <p>Upload an Excel file (.xlsx or .xls) with the following columns:</p>
+                    <ul>
+                        <li><strong>Term</strong> - The flashcard term (required)</li>
+                        <li><strong>Definition</strong> - The flashcard definition (required)</li>
+                        <li><strong>Category</strong> - The flashcard category (optional)</li>
+                    </ul>
+                    <p><strong>Example Excel Structure:</strong></p>
+                    <div class="excel-example">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th>Term</th>
+                                    <th>Definition</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>CPU</td>
+                                    <td>Central Processing Unit</td>
+                                    <td>Technology</td>
+                                </tr>
+                                <tr>
+                                    <td>RAM</td>
+                                    <td>Random Access Memory</td>
+                                    <td>Technology</td>
+                                </tr>
+                                <tr>
+                                    <td>HTML</td>
+                                    <td>HyperText Markup Language</td>
+                                    <td>Web</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <form id="bulkUploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="bulkExcelFile" class="form-label">Excel File *</label>
+                        <div class="file-upload-area" id="excelUploadArea">
+                            <div class="upload-icon">📊</div>
+                            <p>Select Excel file to upload:</p>
+                            <div class="custom-file-input-wrapper">
+                                <input type="file" id="bulkExcelFile" name="file" class="custom-file-input" accept=".xlsx,.xls" required onchange="handleExcelFileSelection(event)">
+                                <button type="button" class="custom-file-button">
+                                    <span class="file-icon">📁</span>
+                                    <span>Choose Excel File</span>
+                                </button>
+                            </div>
+                            <div class="file-status" id="excelFileStatus">No file selected</div>
+                            <p class="upload-hint">Excel files only (.xlsx, .xls)</p>
+                        </div>
+                        <div class="form-error" id="bulkExcelFileError"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelBulkUpload">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBulkUpload" form="bulkUploadForm">
+                    Upload Flashcards
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flashcard Viewer Modal -->
+    <div class="modal-overlay" id="flashcardViewerModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="flashcardViewerTitle">Flashcard Viewer</h3>
+                <div class="viewer-controls">
+                    <span id="flashcardCounter">1 / 1</span>
+                    <button class="btn btn-outline" id="closeFlashcardViewer">Close</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="flashcard-viewer-container">
+                    <button class="nav-btn nav-prev" id="prevFlashcard">&lt;</button>
+                    <div class="flashcard-display">
+                        <div id="currentFlashcard" class="flashcard-content">
+                            <div class="flashcard-side front active" id="flashcardFront">
+                                <div class="flashcard-text">
+                                    <span class="flashcard-label">Term</span>
+                                    <h3 id="flashcardTermDisplay">Loading...</h3>
+                                </div>
+                                <p class="flashcard-hint">Click to reveal definition</p>
+                            </div>
+                            <div class="flashcard-side back" id="flashcardBack">
+                                <div class="flashcard-text">
+                                    <span class="flashcard-label">Definition</span>
+                                    <p id="flashcardDefinitionDisplay">Loading...</p>
+                                </div>
+                                <p class="flashcard-hint">Click to show term</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="nav-btn nav-next" id="nextFlashcard">&gt;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configure Class Modal -->
+    <div class="modal-overlay" id="configureClassModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="configureClassTitle">Configure Class</h3>
+                <button class="modal-close" id="closeConfigureClassModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="configureClassSuccess"></div>
+
+                <!-- Class Configuration Options -->
+                <div class="configure-options">
+                    <div class="configure-option-card" id="configureFlashcardsCard">
+                        <div class="option-icon">🗂️</div>
+                        <div class="option-content">
+                            <h4>Manage Flashcards</h4>
+                            <p>Assign flashcards to this class for student study</p>
+                            <button class="btn btn-primary" id="configureFlashcardsBtn">Configure Flashcards</button>
+                        </div>
+                    </div>
+
+                    <div class="configure-option-card" id="configureContentCard">
+                        <div class="option-icon">📄</div>
+                        <div class="option-content">
+                            <h4>Manage Content</h4>
+                            <p>Upload and manage PDF documents and slides</p>
+                            <button class="btn btn-primary" id="configureContentBtn">Manage Content</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelConfigureClass">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Flashcards Assignment Modal -->
+    <div class="modal-overlay" id="classFlashcardsModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="classFlashcardsTitle">Assign Flashcards to Class</h3>
+                <button class="modal-close" id="closeClassFlashcardsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message" id="classFlashcardsSuccess"></div>
+
+                <!-- Filter and Actions -->
+                <div class="flashcard-assignment-actions">
+                    <div class="assignment-filters">
+                        <div class="custom-dropdown" id="assignCategoryFilterDropdown">
+                            <div class="dropdown-trigger" id="assignCategoryFilterTrigger">
+                                <span class="dropdown-text">All Categories</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-menu" id="assignCategoryFilterMenu">
+                                <div class="dropdown-item" data-value="">All Categories</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="assignment-summary">
+                        <span id="assignmentCount">0 flashcards assigned to this class</span>
+                    </div>
+                </div>
+
+                <!-- Flashcards Assignment Grid -->
+                <div class="flashcard-assignment-section">
+                    <h4>Available Flashcards</h4>
+                    <div id="flashcardAssignmentList" class="flashcard-assignment-grid">
+                        <p>Loading flashcards...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelClassFlashcards">Close</button>
+                <button type="button" class="btn btn-primary" id="saveFlashcardAssignments">Save Assignments</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../services/auth.js"></script>
+    <script src="admin-dashboard.js"></script>
+</body>
+</html>

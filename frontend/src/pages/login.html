@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PhoenixTeam Education</title>
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="../assets/PhoenixTeam Horizontal_Gradient.png" alt="PhoenixTeam" class="login-logo">
+                <h1>Education Center</h1>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary login-btn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loader" style="display: none;">Signing in...</span>
+                </button>
+
+                <div class="login-error" id="loginError" style="display: none;"></div>
+            </form>
+
+            <div class="login-footer">
+                <p>New to PhoenixTeam? Contact your administrator for access.</p>
+            </div>
+        </div>
+
+        <div class="login-background">
+            <div class="gradient-overlay"></div>
+        </div>
+    </div>
+
+    <script src="../services/auth.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File Upload</title>
+</head>
+<body>
+    <h1>Test File Upload</h1>
+
+    <input type="file" id="testFileInput" multiple accept=".pdf,.jpg,.png">
+    <button onclick="testUpload()">Test Upload</button>
+
+    <div id="output"></div>
+
+    <script>
+        function testUpload() {
+            const fileInput = document.getElementById('testFileInput');
+            const output = document.getElementById('output');
+
+            if (fileInput.files.length === 0) {
+                output.innerHTML = 'No files selected';
+                return;
+            }
+
+            output.innerHTML = `Selected ${fileInput.files.length} file(s):<br>`;
+
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                output.innerHTML += `- ${file.name} (${file.type}, ${file.size} bytes)<br>`;
+            }
+        }
+    </script>
+</body>
+</html>

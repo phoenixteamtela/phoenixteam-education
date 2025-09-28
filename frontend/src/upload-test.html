@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Test</title>
+</head>
+<body>
+    <h1>Simple Upload Test</h1>
+
+    <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.png">
+    <button onclick="testUpload()">Upload to Class 1</button>
+
+    <div id="status"></div>
+    <div id="logs"></div>
+
+    <script>
+        function log(message) {
+            const logs = document.getElementById('logs');
+            logs.innerHTML += '<div>' + new Date().toISOString() + ': ' + message + '</div>';
+            console.log(message);
+        }
+
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const status = document.getElementById('status');
+
+            log('Starting upload test...');
+
+            if (fileInput.files.length === 0) {
+                log('ERROR: No files selected');
+                return;
+            }
+
+            log('Files selected: ' + fileInput.files.length);
+
+            // Get auth token first
+            const tokenResponse = await fetch('http://localhost:8000/api/auth/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'username=admin&password=phoenixteam2024'
+            });
+
+            if (!tokenResponse.ok) {
+                log('ERROR: Failed to get auth token');
+                return;
+            }
+
+            const tokenData = await tokenResponse.json();
+            const token = tokenData.access_token;
+            log('Got auth token: ' + token.substring(0, 20) + '...');
+
+            // Upload each file
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                log('Uploading file: ' + file.name + ' (' + file.size + ' bytes)');
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const title = encodeURIComponent(file.name.split('.')[0]);
+
+                try {
+                    const uploadResponse = await fetch(`http://localhost:8000/api/slides/upload/1?title=${title}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: formData
+                    });
+
+                    log('Upload response status: ' + uploadResponse.status);
+
+                    if (uploadResponse.ok) {
+                        const result = await uploadResponse.json();
+                        log('SUCCESS: File uploaded - ID: ' + result.id);
+                    } else {
+                        const error = await uploadResponse.text();
+                        log('ERROR: Upload failed - ' + error);
+                    }
+                } catch (error) {
+                    log('ERROR: Upload exception - ' + error.message);
+                }
+            }
+
+            log('Upload test completed');
+        }
+    </script>
+</body>
+</html>

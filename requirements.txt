@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+openai
+python-dotenv
+Pillow
+aiofiles
+jinja2
+streamlit
+requests

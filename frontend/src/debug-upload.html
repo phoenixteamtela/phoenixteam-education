@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Upload MIME Types</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .file-info { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .upload-result { margin: 20px 0; padding: 10px; }
+        .error { background-color: #fee; }
+        .success { background-color: #efe; }
+    </style>
+</head>
+<body>
+    <h1>Debug Upload MIME Types</h1>
+
+    <input type="file" id="debugFileInput" multiple>
+    <button onclick="analyzeFiles()">Analyze File Types</button>
+    <button onclick="testUpload()">Test Upload</button>
+
+    <div id="fileAnalysis"></div>
+    <div id="uploadResults"></div>
+
+    <script>
+        function analyzeFiles() {
+            const fileInput = document.getElementById('debugFileInput');
+            const analysis = document.getElementById('fileAnalysis');
+
+            if (fileInput.files.length === 0) {
+                analysis.innerHTML = '<p>No files selected</p>';
+                return;
+            }
+
+            analysis.innerHTML = '<h3>File Analysis:</h3>';
+
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                analysis.innerHTML += `
+                    <div class="file-info">
+                        <strong>File ${i + 1}:</strong><br>
+                        Name: ${file.name}<br>
+                        Type: ${file.type}<br>
+                        Size: ${file.size} bytes<br>
+                        Last Modified: ${new Date(file.lastModified).toISOString()}
+                    </div>
+                `;
+            }
+        }
+
+        async function testUpload() {
+            const fileInput = document.getElementById('debugFileInput');
+            const results = document.getElementById('uploadResults');
+
+            if (fileInput.files.length === 0) {
+                results.innerHTML = '<p>No files selected</p>';
+                return;
+            }
+
+            results.innerHTML = '<h3>Upload Results:</h3>';
+
+            // Get auth token
+            try {
+                const tokenResponse = await fetch('http://localhost:8000/api/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'username=admin&password=phoenixteam2024'
+                });
+
+                if (!tokenResponse.ok) {
+                    results.innerHTML += '<div class="error">Failed to get auth token</div>';
+                    return;
+                }
+
+                const tokenData = await tokenResponse.json();
+                const token = tokenData.access_token;
+
+                // Try to upload each file
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const title = encodeURIComponent(file.name.split('.')[0]);
+
+                    try {
+                        const uploadResponse = await fetch(`http://localhost:8000/api/slides/upload/1?title=${title}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: formData
+                        });
+
+                        const responseText = await uploadResponse.text();
+
+                        if (uploadResponse.ok) {
+                            results.innerHTML += `
+                                <div class="success">
+                                    <strong>${file.name}:</strong> UPLOAD SUCCESS<br>
+                                    Response: ${responseText}
+                                </div>
+                            `;
+                        } else {
+                            results.innerHTML += `
+                                <div class="error">
+                                    <strong>${file.name}:</strong> UPLOAD FAILED (${uploadResponse.status})<br>
+                                    Browser detected type: ${file.type}<br>
+                                    Server response: ${responseText}
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        results.innerHTML += `
+                            <div class="error">
+                                <strong>${file.name}:</strong> UPLOAD ERROR<br>
+                                Error: ${error.message}
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                results.innerHTML += `<div class="error">Auth error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-analyze files when selected
+        document.getElementById('debugFileInput').addEventListener('change', analyzeFiles);
+    </script>
+</body>
+</html>
