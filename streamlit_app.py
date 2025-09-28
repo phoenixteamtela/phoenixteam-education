@@ -5,7 +5,7 @@ import time
 import requests
 import os
 from pathlib import Path
-from secrets import get_secrets, validate_secrets
+from app_secrets import get_secrets, validate_secrets
 
 # Configure Streamlit page
 st.set_page_config(
