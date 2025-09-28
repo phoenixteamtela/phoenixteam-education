@@ -17,7 +17,7 @@ st.set_page_config(
 def main():
     # Get secrets for Streamlit Cloud deployment
     secrets = get_secrets()
-    validate_secrets()
+    validate_secrets(secrets)
 
     # Main application title
     st.title("🔥 PhoenixTeam Education Platform")
