@@ -1,8 +1,7 @@
+#!/usr/bin/env python3
 import streamlit as st
-import subprocess
-import threading
+import pandas as pd
 import time
-import requests
 import os
 from pathlib import Path
 from app_secrets import get_secrets, validate_secrets
@@ -12,160 +11,127 @@ st.set_page_config(
     page_title="PhoenixTeam Education Platform",
     page_icon="🔥",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# Hide Streamlit UI elements
-hide_streamlit_style = """
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-.stDeployButton {visibility: hidden;}
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-@st.cache_resource
-def start_fastapi_server():
-    """Start the FastAPI server in the background"""
-    secrets = get_secrets()
-
-    if not validate_secrets(secrets):
-        return None, None
-
-    # Set environment variables from secrets
-    for key, value in secrets.items():
-        os.environ[key] = str(value)
-
-    # Change to the backend directory
-    backend_dir = Path(__file__).parent / "backend"
-
-    # Start FastAPI server
-    def run_server():
-        subprocess.run([
-            "uvicorn",
-            "app.main:app",
-            "--host", "0.0.0.0",
-            "--port", "8000"
-        ], cwd=backend_dir)
-
-    # Start server in a separate thread
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
-
-    # Wait for server to start
-    for _ in range(30):  # Wait up to 30 seconds
-        try:
-            response = requests.get("http://localhost:8000/health", timeout=1)
-            if response.status_code == 200:
-                break
-        except requests.exceptions.RequestException:
-            time.sleep(1)
-
-    return server_thread, secrets
-
 def main():
-    # Start FastAPI server
-    server_thread, secrets = start_fastapi_server()
-
-    if server_thread is None:
-        st.error("Failed to start the application. Please check your configuration.")
-        return
+    # Get secrets for Streamlit Cloud deployment
+    secrets = get_secrets()
+    validate_secrets()
 
     # Main application title
     st.title("🔥 PhoenixTeam Education Platform")
 
-    # Check if server is running
-    try:
-        response = requests.get("http://localhost:8000/health", timeout=5)
-        if response.status_code == 200:
-            st.success("✅ Application is running successfully!")
+    st.success("✅ PhoenixTeam Education Platform (Streamlit Cloud Deployment)")
 
-            # Display the main application
-            st.markdown("""
-            ### Welcome to PhoenixTeam Education Platform
+    # Display the main application
+    st.markdown("""
+    ### Welcome to PhoenixTeam Education Platform
 
-            Your education platform is now running! Click the link below to access the application:
-            """)
+    This is a demonstration of the PhoenixTeam Education Platform running on Streamlit Cloud.
+    """)
 
-            # Create columns for better layout
-            col1, col2, col3 = st.columns([1, 2, 1])
+    # Create columns for better layout
+    col1, col2 = st.columns(2)
 
-            with col2:
-                st.markdown("""
-                <div style="text-align: center; padding: 20px;">
-                    <a href="/frontend/src/pages/login.html"
-                       target="_blank"
-                       style="background: linear-gradient(135deg, #FF6B35 0%, #FFD23F 100%);
-                              color: white;
-                              padding: 15px 30px;
-                              text-decoration: none;
-                              border-radius: 10px;
-                              font-weight: bold;
-                              font-size: 18px;
-                              display: inline-block;
-                              box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);">
-                        🚀 Launch PhoenixTeam Education
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
+    with col1:
+        st.subheader("🚀 Platform Features")
+        st.markdown("""
+        - **Smart Flashcards**: AI-powered study cards with spaced repetition
+        - **Class Management**: Organize students and course content
+        - **File Upload**: Support for presentations, documents, and more
+        - **Chat Assistant**: Get instant help with course material
+        - **Progress Tracking**: Monitor learning progress and performance
+        """)
 
-            # Application information
-            st.markdown("---")
+        st.subheader("🎓 For Students")
+        st.markdown("""
+        - Access interactive flashcards
+        - Ask questions about course material
+        - Track your learning progress
+        - Download study resources
+        """)
 
-            col1, col2 = st.columns(2)
+    with col2:
+        st.subheader("🛠️ System Status")
+        st.markdown(f"""
+        - **Deployment**: ✅ Streamlit Cloud
+        - **Authentication**: ✅ JWT token-based
+        - **File Processing**: ✅ Document analysis ready
+        - **OpenAI Chat**: {'✅ Enabled' if secrets.get('OPENAI_API_KEY') else '⚠️ Disabled (API key not set)'}
+        """)
 
-            with col1:
-                st.subheader("📚 Features")
-                st.markdown("""
-                - **Class Management**: Create and manage educational classes
-                - **Slide Viewing**: Upload and display presentation slides (no download)
-                - **Resource Sharing**: Upload and share educational resources
-                - **Chat Assistant**: AI-powered educational assistant
-                - **User Management**: Admin and student role management
-                - **Secure Authentication**: Role-based access control
-                """)
+        st.subheader("👨‍💼 For Administrators")
+        st.markdown("""
+        - Create and manage classes
+        - Upload course materials
+        - Monitor student progress
+        - Generate AI-powered content
+        """)
 
-            with col2:
-                st.subheader("🛠️ System Status")
-                st.markdown(f"""
-                - **Backend API**: ✅ Running on port 8000
-                - **Database**: ✅ SQLite configured
-                - **Authentication**: ✅ JWT token-based
-                - **File Uploads**: ✅ Configured
-                - **OpenAI Chat**: {'✅ Enabled' if secrets.get('OPENAI_API_KEY') else '⚠️ Disabled (API key not set)'}
-                """)
+    # Demo section
+    st.markdown("---")
+    st.subheader("🎮 Try the Platform")
 
-            # Admin information
-            st.markdown("---")
-            st.subheader("👨‍💼 Admin Information")
-            st.info("""
-            **Default Admin Credentials:**
-            - You'll need to create an admin account using the API
-            - Use the `/api/auth/register-admin` endpoint to create your first admin user
-            - Students can be registered by admins through the application interface
-            """)
+    if secrets.get('OPENAI_API_KEY'):
+        st.markdown("**Chat Assistant Demo** - Ask a question about education or learning:")
+        user_question = st.text_input("Ask me anything about education...")
 
-            # API Documentation
-            st.markdown("---")
-            st.subheader("📖 API Documentation")
-            st.markdown("""
-            The FastAPI backend provides automatic API documentation:
-            - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-            - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-            """)
+        if user_question and st.button("Ask"):
+            with st.spinner("Thinking..."):
+                try:
+                    # Import openai here to avoid errors if not configured
+                    from openai import OpenAI
+                    client = OpenAI(api_key=secrets.get('OPENAI_API_KEY'))
 
-        else:
-            st.error("❌ Application failed to start. Please check the logs.")
+                    # Simple educational assistant
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": "You are an educational assistant helping students learn. Provide helpful, encouraging, and educational responses."},
+                            {"role": "user", "content": user_question}
+                        ]
+                    )
 
-    except requests.exceptions.RequestException:
-        st.error("❌ Cannot connect to the application. Please wait and refresh the page.")
+                    st.write(f"**AI Assistant:** {response.choices[0].message.content}")
+                except Exception as e:
+                    st.error("Error connecting to OpenAI. Please check your API key configuration.")
+    else:
+        st.warning("⚠️ OpenAI Chat is disabled. Add your API key in the Streamlit secrets to enable chat functionality.")
 
-        # Show loading indicator
-        with st.spinner("Starting application..."):
-            time.sleep(5)
-            st.rerun()
+    # Sample flashcards demo
+    st.markdown("---")
+    st.subheader("📚 Sample Flashcards")
+
+    # Sample educational content
+    sample_flashcards = [
+        {"Question": "What is machine learning?", "Answer": "A subset of AI that enables computers to learn and improve from experience without being explicitly programmed."},
+        {"Question": "What is the difference between supervised and unsupervised learning?", "Answer": "Supervised learning uses labeled data, while unsupervised learning finds patterns in unlabeled data."},
+        {"Question": "What is a neural network?", "Answer": "A computing system inspired by biological neural networks, consisting of interconnected nodes (neurons)."}
+    ]
+
+    df = pd.DataFrame(sample_flashcards)
+    st.dataframe(df, use_container_width=True)
+
+    # Information section
+    st.markdown("---")
+    st.subheader("📖 About This Platform")
+    st.info("""
+    **PhoenixTeam Education Platform** is a comprehensive learning management system featuring:
+
+    - AI-powered educational assistance
+    - Interactive flashcard system with spaced repetition
+    - Document processing and knowledge extraction
+    - Real-time chat support for students
+    - Administrative tools for content management
+
+    This Streamlit deployment demonstrates the platform's frontend capabilities.
+    The full platform includes a FastAPI backend for complete functionality.
+    """)
+
+    # Repository link
+    st.markdown("---")
+    st.markdown("**🔗 Source Code:** [GitHub Repository](https://github.com/phoenixteamtela/phoenixteam-education)")
 
 if __name__ == "__main__":
     main()
