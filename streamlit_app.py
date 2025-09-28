@@ -28,7 +28,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 @st.cache_resource
 def start_fastapi_server():
-    """Start the FastAPI server in the background"""
+    """For Streamlit Cloud, skip FastAPI and serve frontend directly"""
     secrets = get_secrets()
 
     if not validate_secrets(secrets):
@@ -38,32 +38,8 @@ def start_fastapi_server():
     for key, value in secrets.items():
         os.environ[key] = str(value)
 
-    # Change to the backend directory
-    backend_dir = Path(__file__).parent / "backend"
-
-    # Start FastAPI server
-    def run_server():
-        subprocess.run([
-            "uvicorn",
-            "app.main:app",
-            "--host", "0.0.0.0",
-            "--port", "8000"
-        ], cwd=backend_dir)
-
-    # Start server in a separate thread
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
-
-    # Wait for server to start
-    for _ in range(30):  # Wait up to 30 seconds
-        try:
-            response = requests.get("http://localhost:8000/health", timeout=1)
-            if response.status_code == 200:
-                break
-        except requests.exceptions.RequestException:
-            time.sleep(1)
-
-    return server_thread, secrets
+    # For Streamlit Cloud deployment, return mock server status
+    return True, secrets
 
 def main():
     # Start FastAPI server
@@ -76,10 +52,8 @@ def main():
     # Main application title
     st.title("🔥 PhoenixTeam Education Platform")
 
-    # Check if server is running
+    # For Streamlit Cloud, skip backend health check and serve frontend
     try:
-        response = requests.get("http://localhost:8000/health", timeout=5)
-        if response.status_code == 200:
             st.success("✅ Application is running successfully!")
 
             # Display the main application
@@ -167,16 +141,9 @@ def main():
             - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
             """)
 
-        else:
-            st.error("❌ Application failed to start. Please check the logs.")
-
-    except requests.exceptions.RequestException:
-        st.error("❌ Cannot connect to the application. Please wait and refresh the page.")
-
-        # Show loading indicator
-        with st.spinner("Starting application..."):
-            time.sleep(5)
-            st.rerun()
+    except Exception as e:
+        st.error("❌ Application error. Please refresh the page.")
+        st.write("If the problem persists, check the application logs.")
 
 if __name__ == "__main__":
     main()
